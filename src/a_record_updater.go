@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"errors"
+	"net/http"
+	"io/ioutil"
 )
 
 const (
@@ -31,8 +33,30 @@ func main() {
         log.Fatal(err)
     }
 
+	currentIp, err := fetchCurrentIp(conf.IpfyAPIUrl)
+	if err != nil {
+        log.Fatal(err)
+    }
+
 	fmt.Println(conf)
- 
+	fmt.Println(currentIp)
+
+}
+
+func fetchCurrentIp(ipfyUrl string) (string, error){
+	resp, err := http.Get(ipfyUrl)
+	if err != nil {
+        log.Fatal(err)
+    }
+
+	defer resp.Body.Close()
+
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+	return string(body), nil
 }
 
 func loadConf() (configuration, error) {
@@ -65,3 +89,4 @@ func loadConf() (configuration, error) {
 	
 	return config, nil
 }
+

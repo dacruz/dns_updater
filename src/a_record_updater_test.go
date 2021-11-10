@@ -1,8 +1,12 @@
 package main
 
 import (
-	"testing"
+	"context"
+	"net/http"
 	"os"
+	"testing"
+	"time"
+
 )
 
 func TestLoadConfReadsGoDaddyAPIUrl(t *testing.T) {
@@ -120,6 +124,50 @@ func TestLoadConfFailsForAbsentIpfyUrl(t *testing.T) {
 		t.Fatal("loadConf must fail if conf.IpfyAPIUrl is absent")
 	}
 }
+
+func TestFetchCurrentIp(t *testing.T) {
+	server := startServer()
+	
+	currectIp, _ := fetchCurrentIp("http://localhost:7000")
+	
+	if currectIp != "10.0.0.1" {
+		t.Fatal("currectIp does not have the expected value")
+	}
+	
+	if err := stopServer(server); err != nil {
+		t.Fatal("Server shutdown failed")
+	}
+}
+
+func startServer() *http.Server {
+	router := http.NewServeMux() 
+	router.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write([]byte("10.0.0.1"))
+	})
+	
+	server := &http.Server{
+		Addr:         ":7000",
+		Handler:      router,
+	}
+
+	go server.ListenAndServe()
+	time.Sleep(2*time.Second)
+
+	return server
+}
+
+func stopServer(server *http.Server) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3* time.Second)
+  	defer cancel()
+
+  	server.SetKeepAlivesEnabled(false)
+  	if err := server.Shutdown(ctx); err != nil {
+    	return err
+  	}
+	
+	return server.Shutdown(ctx)
+}
+
 
 func setEnvVars() {
 	os.Setenv(DNS_UPDATER_GO_DADDY_API_URL, "https://api.godaddy.com/v1/")
