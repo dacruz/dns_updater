@@ -49,6 +49,19 @@ func TestFailToParseFetchCurrentRecordValueResponse(t *testing.T) {
 	server := startServer()
 	defer stopServer(server)
 
+	_, err := FetchCurrentRecordValue("http://localhost:7000/v1/WRONG/RESPONSE", "poiuytre.nl", "@", "API_KEY")
+	
+	if err == nil {
+		t.Fatal("FetchCurrentRecordValue should not have returned a valid json")
+	}
+	
+}
+
+
+func TestFailToParseFetchCurrentRecordValue(t *testing.T) {
+	server := startServer()
+	defer stopServer(server)
+
 	_, err := FetchCurrentRecordValue("http://localhost:7000/v1/WRONG/IP", "poiuytre.nl", "@", "API_KEY")
 	
 	if err == nil {
@@ -62,14 +75,18 @@ func startServer() *http.Server {
 
 	router.HandleFunc("/v1/domains/poiuytre.nl/records/A/@", func(rw http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") == "sso-key API_KEY" {
-			rw.Write([]byte("10.0.0.1"))
+			rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
 		} else {
 			rw.Write([]byte("sso-key motherf***er, do you speak it?!"))
 		}
 	})
 
-	router.HandleFunc("/v1/WRONG/IP/domains/poiuytre.nl/records/A/@", func(rw http.ResponseWriter, r *http.Request) {
+	router.HandleFunc("/v1/WRONG/RESPONSE/domains/poiuytre.nl/records/A/@", func(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte("WRONG_IP"))
+	})
+
+	router.HandleFunc("/v1/WRONG/IP/domains/poiuytre.nl/records/A/@", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write([]byte(`[{"data":"10","name":"@","ttl":600,"type":"A"}]`))
 	})
 
 	server := &http.Server{

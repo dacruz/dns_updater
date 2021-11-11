@@ -6,7 +6,12 @@ import (
 	"net/http"
 	"io/ioutil"
 	"errors"
+	"encoding/json"
 )
+
+type record struct {
+	Data string
+}
 
 func FetchCurrentRecordValue(godaddyUrl string, domain string, host string, apiKey string) (net.IP, error) {
 
@@ -31,7 +36,13 @@ func FetchCurrentRecordValue(godaddyUrl string, domain string, host string, apiK
 		return nil, errors.New(errorMessage)
 	}
 
-	ip := net.ParseIP(string(bodyBytes))
+	var records []record
+	e := json.Unmarshal(bodyBytes, &records)
+	if e != nil {
+		return nil, errors.New("invalid json response")
+	}
+
+	ip := net.ParseIP(records[0].Data)
 	if ip == nil {
 		return nil, errors.New("invalid IP")
 	}

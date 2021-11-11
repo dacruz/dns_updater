@@ -6,6 +6,7 @@ import (
 	"os"
 	"errors"
 	"github.com/dacruz/dns_updater/ipfy"
+	"github.com/dacruz/dns_updater/godaddy"
 )
 
 const (
@@ -31,14 +32,19 @@ func main() {
 	if err != nil {
         log.Fatal(err)
     }
+	fmt.Println(conf)
 
 	currentIp, err := ipfy.FetchCurrentIp(conf.IpfyAPIUrl)
 	if err != nil {
         log.Fatal(err)
     }
-
-	fmt.Println(conf)
 	fmt.Println(currentIp)
+
+	currentDnsValue, err := godaddy.FetchCurrentRecordValue(conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
+	if err != nil {
+        log.Fatal(err)
+    }
+	fmt.Println(currentDnsValue)
 
 }
 
