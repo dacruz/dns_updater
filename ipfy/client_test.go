@@ -28,7 +28,7 @@ func TestFailToRequestCurrentIp(t *testing.T) {
 	
 	
 	if err == nil {
-		t.Fatal("fetchCurrentIp should have failed to execute GET")
+		t.Fatal("FetchCurrentIp should have failed to execute GET")
 	}
 	
 }
@@ -40,7 +40,7 @@ func TestFailToFetchCurrentIp(t *testing.T) {
 	_, err := FetchCurrentIp("http://localhost:7000/WRONG/PATH")
 	
 	if err == nil {
-		t.Fatal("fetchCurrentIp should not have return 2xx")
+		t.Fatal("FetchCurrentIp should not succeed on non 2xx")
 	}
 	
 }
@@ -52,7 +52,7 @@ func TestFailToParseFetchCurrentIpResponse(t *testing.T) {
 	_, err := FetchCurrentIp("http://localhost:7000/WRONG/IP")
 	
 	if err == nil {
-		t.Fatal("fetchCurrentIp should not have returned a valid ip")
+		t.Fatal("FetchCurrentIp should not have returned a valid ip")
 	}
 	
 }
