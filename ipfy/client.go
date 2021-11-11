@@ -1,26 +1,15 @@
 package ipfy
 
 import (
-	"fmt"
-	"net"
-	"net/http"
-	"io/ioutil"
 	"errors"
+	"net"
+	"github.com/dacruz/dns_updater/http_2xx_only"
 )
 
 func FetchCurrentIp(ipfyUrl string) (net.IP, error){
-	resp, err := http.Get(ipfyUrl)
+    bodyBytes, err := http_2xx_only.Get(ipfyUrl, nil)
 	if err != nil {
-        return nil, err
-    }
-	defer resp.Body.Close()
-
-	// if he dies, he dies...
-    bodyBytes, _ := ioutil.ReadAll(resp.Body)
-    
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		errorMessage := fmt.Sprintf("request failed: %d, %q", resp.StatusCode, string(bodyBytes))
-		return nil, errors.New(errorMessage)
+		return nil, err
 	}
 
 	ip := net.ParseIP(string(bodyBytes))

@@ -20,31 +20,6 @@ func TestFetchCurrentRecordValue(t *testing.T) {
 	
 }
 
-func TestFailToRequestCurrentRecordValue(t *testing.T) {
-	server := startServer()
-	defer stopServer(server)
-
-	_, err := FetchCurrentRecordValue("WRONG://localhost:7000/v1", "poiuytre.nl", "@", "API_KEY")
-	
-	
-	if err == nil {
-		t.Fatal("FetchCurrentRecordValue should have failed to execute GET")
-	}
-	
-}
-
-func TestFailToFetchCurrentRecordValue(t *testing.T) {
-	server := startServer()
-	defer stopServer(server)
-
-	_, err := FetchCurrentRecordValue("http://localhost:7000/WRONG/v2", "poiuytre.nl", "@", "API_KEY")
-	
-	if err == nil {
-		t.Fatal("FetchCurrentRecordValue should not succeed on non 2xx")
-	}
-	
-}
-
 func TestFailToParseFetchCurrentRecordValueResponse(t *testing.T) {
 	server := startServer()
 	defer stopServer(server)
@@ -57,7 +32,6 @@ func TestFailToParseFetchCurrentRecordValueResponse(t *testing.T) {
 	
 }
 
-
 func TestFailToParseFetchCurrentRecordValue(t *testing.T) {
 	server := startServer()
 	defer stopServer(server)
@@ -66,6 +40,18 @@ func TestFailToParseFetchCurrentRecordValue(t *testing.T) {
 	
 	if err == nil {
 		t.Fatal("FetchCurrentRecordValue should not have returned a valid ip")
+	}
+	
+}
+
+func TestFailFetchCurrentRecordValueOnNon2xx(t *testing.T) {
+	server := startServer()
+	defer stopServer(server)
+
+	_, err := FetchCurrentRecordValue("http://localhost:7000/NOT_2XX", "poiuytre.nl", "@", "API_KEY")
+	
+	if err == nil {
+		t.Fatal("FetchCurrentRecordValue should fail on non 2xx")
 	}
 	
 }
