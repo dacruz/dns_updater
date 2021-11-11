@@ -5,9 +5,7 @@ import (
 	"log"
 	"os"
 	"errors"
-	"net"
-	"net/http"
-	"io/ioutil"
+	"github.com/dacruz/dns_updater/ipfy"
 )
 
 const (
@@ -34,7 +32,7 @@ func main() {
         log.Fatal(err)
     }
 
-	currentIp, err := fetchCurrentIp(conf.IpfyAPIUrl)
+	currentIp, err := ipfy.FetchCurrentIp(conf.IpfyAPIUrl)
 	if err != nil {
         log.Fatal(err)
     }
@@ -42,29 +40,6 @@ func main() {
 	fmt.Println(conf)
 	fmt.Println(currentIp)
 
-}
-
-func fetchCurrentIp(ipfyUrl string) (net.IP, error){
-	resp, err := http.Get(ipfyUrl)
-	if err != nil {
-        return nil, err
-    }
-	defer resp.Body.Close()
-
-	// if he dies, he dies...
-    bodyBytes, _ := ioutil.ReadAll(resp.Body)
-    
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		errorMessage := fmt.Sprintf("request failed: %d, %q", resp.StatusCode, string(bodyBytes))
-		return nil, errors.New(errorMessage)
-	}
-
-	ip := net.ParseIP(string(bodyBytes))
-	if ip == nil {
-		return nil, errors.New("invalid IP")
-	}
-
-	return ip, nil
 }
 
 func loadConf() (configuration, error) {
