@@ -11,13 +11,15 @@ import (
 var handlers = map[string]func(http.ResponseWriter, *http.Request) {
 	"/v1/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") == "sso-key API_KEY" {
-			if r.Method == "GET" {
+			switch r.Method {
+			case "GET":
 				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
+			case "PUT":
+				rw.WriteHeader(http.StatusOK)
+			default:
+				rw.WriteHeader(http.StatusBadRequest)
 			}
 			
-			if r.Method == "PUT" {
-				rw.Write([]byte(`[{"data":"11.0.0.1","name":"@","ttl":600,"type":"A"}]`))
-			}
 		} else {
 			rw.Write([]byte("sso-key motherf***er, do you speak it?!"))
 		}
@@ -89,30 +91,6 @@ func TestUpdateRecordValue(t *testing.T) {
 	}
 }
 
-func TestFailToParseUpdateRecordValueResponse(t *testing.T) {
-	server := http2xx.StartStubServer(handlers)
-	defer http2xx.StopStubServer(server)
-
-	_, err := UpdateRecordValue(net.ParseIP("11.0.0.1"),"http://localhost:7000/v1/WRONG/RESPONSE", "poiuytre.nl", "@", "API_KEY")
-	
-	if err == nil {
-		t.Fatal("UpdateRecordValue should not have returned a valid json")
-	}
-	
-}
-
-func TestFailToParseUpdateRecordValueValue(t *testing.T) {
-	server := http2xx.StartStubServer(handlers)
-	defer http2xx.StopStubServer(server)
-
-	_, err := UpdateRecordValue(net.ParseIP("11.0.0.1"), "http://localhost:7000/v1/INVALID/IP", "poiuytre.nl", "@", "API_KEY")
-	
-	if err == nil {
-		t.Fatal("UpdateRecordValue should not have parsed an invalid ip")
-	}
-	
-}
-
 func TestFailUpdateRecordValueOnNon2xx(t *testing.T) {
 	server := http2xx.StartStubServer(handlers)
 	defer http2xx.StopStubServer(server)
@@ -124,7 +102,3 @@ func TestFailUpdateRecordValueOnNon2xx(t *testing.T) {
 	}
 
 }
-
-// curl -s -X PUT "https://api.godaddy.com/v1/domains/${mydomain}/records/A/${myhostname}"
-// -H "Authorization: sso-key     ${gdapikey}"
-// -H "Content-Type: application/json" -d "[{\"data\": \"${myip}\"}]"

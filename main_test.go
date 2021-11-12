@@ -1,9 +1,153 @@
 package main
 
 import (
+	"io/ioutil"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/dacruz/dns_updater/http2xx"
 )
+
+func TestRunFailsOnConfigNotCorrect(t * testing.T) {
+	os.Unsetenv(DNS_UPDATER_GO_DADDY_API_URL)
+	os.Unsetenv(DNS_UPDATER_GO_DADDY_API_KEY)
+	os.Unsetenv(DNS_UPDATER_HOST)
+	os.Unsetenv(DNS_UPDATER_DOMAIN)
+	os.Unsetenv(DNS_UPDATER_IPFY_URL)
+	
+	err := run()
+	if err == nil {
+		t.Fatal("it shoudl have failed on missing config")	
+	}
+} 
+
+
+func TestRunFailsOnIpfyFailure(t * testing.T) {
+	setEnvVars()
+
+	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+			rw.WriteHeader(http.StatusBadRequest)
+		},
+	}
+
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+
+	err := run()
+	if err == nil {
+		t.Fatal("it shoudl have failed on ipfy failure")	
+	}
+} 
+
+func TestRunFailsOnGetGodaddyFailure(t * testing.T) {
+	setEnvVars()
+
+	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+			rw.Write([]byte("11.0.0.1"))
+		},
+	}
+
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+
+	err := run()
+	if err == nil {
+		t.Fatal("it shoudl have failed on get godaddy failure")	
+	}
+} 
+
+func TestRunFailsOnPutGodaddyFailure(t * testing.T) {
+	setEnvVars()
+
+	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+		"/godaddy/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
+			if r.Method == "GET" {
+				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
+			}
+			
+			if r.Method == "PUT" {
+				rw.WriteHeader(http.StatusBadRequest)
+			}
+		},
+		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+			rw.Write([]byte("11.0.0.1"))
+		},
+	}
+
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+
+	err := run()
+	if err == nil {
+		t.Fatal("it shoudl have failed on put godaddy failure")	
+	}
+} 
+
+func TestUpdateRecord(t * testing.T) {
+	setEnvVars()
+
+    var updated bool
+	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+		"/godaddy/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
+			if r.Method == "GET" {
+				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
+			}
+			
+			if r.Method == "PUT" {
+				bodyBytes, _ := ioutil.ReadAll(r.Body)
+				body := string(bodyBytes)
+				updated = strings.Contains(body, "11.0.0.1")
+			}
+		},
+		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+			rw.Write([]byte("11.0.0.1"))
+		},
+	}
+
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+	
+	main()
+
+	if !updated {
+		t.Fatal("record was not updated")
+	}
+
+} 
+
+func TestDoNotUpdateRecordIfTheSame(t * testing.T) {
+	setEnvVars()
+
+    var updated bool
+	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+		"/godaddy/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
+			if r.Method == "GET" {
+				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
+			}
+			
+			if r.Method == "PUT" {
+				updated = true
+			}
+		},
+		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+			rw.Write([]byte("10.0.0.1"))
+		},
+	}
+
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+	
+	main()
+
+	if updated {
+		t.Fatal("record was updated when it should not")
+	}
+
+} 
 
 func TestLoadConfReadsGoDaddyAPIUrl(t *testing.T) {
 	setEnvVars()
@@ -122,11 +266,11 @@ func TestLoadConfFailsForAbsentIpfyUrl(t *testing.T) {
 }
 
 func setEnvVars() {
-	os.Setenv(DNS_UPDATER_GO_DADDY_API_URL, "https://api.godaddy.com/v1/")
+	os.Setenv(DNS_UPDATER_GO_DADDY_API_URL, "http://localhost:7000/godaddy")
 	os.Setenv(DNS_UPDATER_GO_DADDY_API_KEY, "SOME_API_KEY")
-	os.Setenv(DNS_UPDATER_HOST, "poiuytre.nl")
-	os.Setenv(DNS_UPDATER_DOMAIN, "www")
-	os.Setenv(DNS_UPDATER_IPFY_URL, "https://api.ipify.org")
+	os.Setenv(DNS_UPDATER_HOST, "@")
+	os.Setenv(DNS_UPDATER_DOMAIN, "poiuytre.nl")
+	os.Setenv(DNS_UPDATER_IPFY_URL, "http://localhost:7000/ipfy")
 }
 
 func unsetEnvVars(varName string) {

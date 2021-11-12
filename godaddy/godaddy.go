@@ -9,7 +9,7 @@ import (
 )
 
 type record struct {
-	Data string
+	Data string `json:"data"`
 }
 
 func FetchCurrentRecordValue(godaddyUrl string, domain string, host string, apiKey string) (net.IP, error) {
@@ -47,25 +47,15 @@ func UpdateRecordValue(ip net.IP, godaddyUrl string, domain string, host string,
 		"Content-Type": "application/json",
 	}
 
-	aRecord := record{Data: ip.String()} 
-	jsonBody, _ := json.Marshal(aRecord)
+	aRecord := record{Data: ip.String()}
+	recordsToUpdate := []record{aRecord}
+	jsonBody, _ := json.Marshal(recordsToUpdate)
 
-	bodyBytes, err := http2xx.Put(url, headers, jsonBody)
+	_, err := http2xx.Put(url, headers, jsonBody)
 	if err != nil {
 		return nil, err
 	}
 
-	var records []record
-	e := json.Unmarshal(bodyBytes, &records)
-	if e != nil {
-		return nil, errors.New("invalid json response")
-	}
-
-	updatedIp := net.ParseIP(records[0].Data)
-	if updatedIp == nil {
-		return nil, errors.New("invalid IP")
-	}
-
-	return 	updatedIp, nil
+	return ip, nil
 
 }

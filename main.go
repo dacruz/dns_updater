@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"errors"
@@ -27,25 +26,42 @@ type configuration struct {
 
 func main() {
 	log.SetPrefix("dns updater: ")
-	
+	err := run()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	conf, err := loadConf()
 	if err != nil {
-        log.Fatal(err)
+        return err
     }
-	fmt.Println(conf)
-
+	
 	currentIp, err := ipfy.FetchCurrentIp(conf.IpfyAPIUrl)
 	if err != nil {
-        log.Fatal(err)
+        return err
     }
-	fmt.Println(currentIp)
+	log.Printf("currentIp: %s", currentIp.String())
 
+	
 	currentDnsValue, err := godaddy.FetchCurrentRecordValue(conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
 	if err != nil {
-        log.Fatal(err)
+        return err
     }
-	fmt.Println(currentDnsValue)
+	log.Printf("currentDnsValue: %s", currentDnsValue.String())
 
+	if ! currentDnsValue.Equal(currentIp) {
+		updatedDnsValue, err := godaddy.UpdateRecordValue(currentIp, conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
+		if err != nil {
+			return err
+		}
+		log.Printf("updatedDnsValue: %s", updatedDnsValue.String())
+	} else {
+		log.Println("no update required")
+	}
+
+	return nil
 }
 
 func loadConf() (configuration, error) {
