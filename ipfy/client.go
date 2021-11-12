@@ -3,11 +3,11 @@ package ipfy
 import (
 	"errors"
 	"net"
-	"github.com/dacruz/dns_updater/http_2xx_only"
+	"github.com/dacruz/dns_updater/http2xx"
 )
 
 func FetchCurrentIp(ipfyUrl string) (net.IP, error){
-    bodyBytes, err := http_2xx_only.Get(ipfyUrl, nil)
+    bodyBytes, err := http2xx.Get(ipfyUrl, nil)
 	if err != nil {
 		return nil, err
 	}

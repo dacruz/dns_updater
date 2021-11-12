@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
-	"github.com/dacruz/dns_updater/http_2xx_only"
+	"github.com/dacruz/dns_updater/http2xx"
 )
 
 type record struct {
@@ -19,7 +19,7 @@ func FetchCurrentRecordValue(godaddyUrl string, domain string, host string, apiK
 		"Authorization": fmt.Sprintf("sso-key %s", apiKey),
 	}
 
-	bodyBytes, err := http_2xx_only.Get(url, headers)
+	bodyBytes, err := http2xx.Get(url, headers)
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package http_2xx_only
+package http2xx
 
 import (
 	"net/http"
