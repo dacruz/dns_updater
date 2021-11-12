@@ -2,14 +2,18 @@ package http2xx
 
 import (
 	"net/http"
-	"context"
 	"testing"
-	"time"
 )
 
+var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+	"/echo/header": func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write([]byte(r.Header.Get("Ping")))
+	},
+}
+
 func TestFailToExecuteGet(t *testing.T) {
-	server := startServer()
-	defer stopServer(server)
+	server := StartStubServer(handlers)
+	defer StopStubServer(server)
 
 	_, err := Get("WRONG://localhost:7000/current/ip", nil)
 	
@@ -21,8 +25,8 @@ func TestFailToExecuteGet(t *testing.T) {
 }
 
 func TestFailToGet2xx(t *testing.T) {
-	server := startServer()
-	defer stopServer(server)
+	server := StartStubServer(handlers)
+	defer StopStubServer(server)
 
 	_, err := Get("http://localhost:7000/WRONG/PATH", nil)
 	
@@ -32,10 +36,9 @@ func TestFailToGet2xx(t *testing.T) {
 	
 }
 
-
 func TestGetWithHeaders(t *testing.T) {
-	server := startServer()
-	defer stopServer(server)
+	server := StartStubServer(handlers)
+	defer StopStubServer(server)
 
 	headers := map[string]string {
 		"Ping": "Pong",
@@ -50,8 +53,9 @@ func TestGetWithHeaders(t *testing.T) {
 }
 
 func TestGetWithoutHeaders(t *testing.T) {
-	server := startServer()
-	defer stopServer(server)
+	
+	server := StartStubServer(handlers)
+	defer StopStubServer(server)
 
 	resp, _ := Get("http://localhost:7000/echo/header", nil)
 	
@@ -59,33 +63,4 @@ func TestGetWithoutHeaders(t *testing.T) {
 		t.Fatal("Get should not include the headers if it is empty")
 	}
 	
-}
-
-func startServer() *http.Server {
-	router := http.NewServeMux() 
-
-	router.HandleFunc("/echo/header", func(rw http.ResponseWriter, r *http.Request) {
-		rw.Write([]byte(r.Header.Get("Ping")))
-	})
-
-	server := &http.Server{
-		Addr:         "localhost:7000",
-		Handler:      router,
-	}
-
-	go server.ListenAndServe()
-	
-	return server
-}
-
-func stopServer(server *http.Server) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3* time.Second)
-  	defer cancel()
-
-  	server.SetKeepAlivesEnabled(false)
-  	if err := server.Shutdown(ctx); err != nil {
-    	return err
-  	}
-	
-	return server.Shutdown(ctx)
 }
