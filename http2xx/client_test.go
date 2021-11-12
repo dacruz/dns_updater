@@ -53,7 +53,7 @@ func TestGetWithoutHeaders(t *testing.T) {
 	server := startServer()
 	defer stopServer(server)
 
-	resp, _ := Get("http://localhost:7000//echo/header", nil)
+	resp, _ := Get("http://localhost:7000/echo/header", nil)
 	
 	if string(resp) != "" {
 		t.Fatal("Get should not include the headers if it is empty")

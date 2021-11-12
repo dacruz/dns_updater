@@ -24,7 +24,7 @@ func Get(url string, headers map[string]string) ([]byte, error) {
 	
 	// if he dies, he dies... 
     bodyBytes, _ := ioutil.ReadAll(response.Body)
-
+	
 	if response.StatusCode < 200 || response.StatusCode > 299 {
 		errorMessage := fmt.Sprintf("request failed: %d, %q", response.StatusCode, string(bodyBytes))
 		return nil, errors.New(errorMessage)
