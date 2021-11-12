@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"errors"
-	"net"
-	"net/http"
-	"io/ioutil"
+	"github.com/dacruz/dns_updater/ipfy"
+	"github.com/dacruz/dns_updater/godaddy"
 )
 
 const (
@@ -28,43 +26,42 @@ type configuration struct {
 
 func main() {
 	log.SetPrefix("dns updater: ")
-	
-	conf, err := loadConf()
+	err := run()
 	if err != nil {
-        log.Fatal(err)
-    }
-
-	currentIp, err := fetchCurrentIp(conf.IpfyAPIUrl)
-	if err != nil {
-        log.Fatal(err)
-    }
-
-	fmt.Println(conf)
-	fmt.Println(currentIp)
-
+		log.Fatal(err)
+	}
 }
 
-func fetchCurrentIp(ipfyUrl string) (net.IP, error){
-	resp, err := http.Get(ipfyUrl)
+func run() error {
+	conf, err := loadConf()
 	if err != nil {
-        return nil, err
+        return err
     }
-	defer resp.Body.Close()
+	
+	currentIp, err := ipfy.FetchCurrentIp(conf.IpfyAPIUrl)
+	if err != nil {
+        return err
+    }
+	log.Printf("currentIp: %s", currentIp.String())
 
-	// if he dies, he dies...
-    bodyBytes, _ := ioutil.ReadAll(resp.Body)
-    
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		errorMessage := fmt.Sprintf("request failed: %d, %q", resp.StatusCode, string(bodyBytes))
-		return nil, errors.New(errorMessage)
+	
+	currentDnsValue, err := godaddy.FetchCurrentRecordValue(conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
+	if err != nil {
+        return err
+    }
+	log.Printf("currentDnsValue: %s", currentDnsValue.String())
+
+	if ! currentDnsValue.Equal(currentIp) {
+		updatedDnsValue, err := godaddy.UpdateRecordValue(currentIp, conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
+		if err != nil {
+			return err
+		}
+		log.Printf("updatedDnsValue: %s", updatedDnsValue.String())
+	} else {
+		log.Println("no update required")
 	}
 
-	ip := net.ParseIP(string(bodyBytes))
-	if ip == nil {
-		return nil, errors.New("invalid IP")
-	}
-
-	return ip, nil
+	return nil
 }
 
 func loadConf() (configuration, error) {
