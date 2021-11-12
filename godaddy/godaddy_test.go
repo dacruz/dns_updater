@@ -4,13 +4,20 @@ import (
 	"net"
 	"net/http"
 	"testing"
+
 	"github.com/dacruz/dns_updater/http2xx"
 )
 
 var handlers = map[string]func(http.ResponseWriter, *http.Request) {
 	"/v1/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") == "sso-key API_KEY" {
-			rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
+			if r.Method == "GET" {
+				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
+			}
+			
+			if r.Method == "PUT" {
+				rw.Write([]byte(`[{"data":"11.0.0.1","name":"@","ttl":600,"type":"A"}]`))
+			}
 		} else {
 			rw.Write([]byte("sso-key motherf***er, do you speak it?!"))
 		}
@@ -18,7 +25,7 @@ var handlers = map[string]func(http.ResponseWriter, *http.Request) {
 	"/v1/WRONG/RESPONSE/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte("WRONG_IP"))
 	},
-	"/v1/WRONG/IP/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
+	"/v1/INVALID/IP/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte(`[{"data":"10","name":"@","ttl":600,"type":"A"}]`))
 	},
 }
@@ -51,10 +58,10 @@ func TestFailToParseFetchCurrentRecordValue(t *testing.T) {
 	server := http2xx.StartStubServer(handlers)
 	defer http2xx.StopStubServer(server)
 
-	_, err := FetchCurrentRecordValue("http://localhost:7000/v1/WRONG/IP", "poiuytre.nl", "@", "API_KEY")
+	_, err := FetchCurrentRecordValue("http://localhost:7000/v1/INVALID/IP", "poiuytre.nl", "@", "API_KEY")
 	
 	if err == nil {
-		t.Fatal("FetchCurrentRecordValue should not have returned a valid ip")
+		t.Fatal("FetchCurrentRecordValue should not have parsed an invalid ip")
 	}
 	
 }
@@ -68,5 +75,56 @@ func TestFailFetchCurrentRecordValueOnNon2xx(t *testing.T) {
 	if err == nil {
 		t.Fatal("FetchCurrentRecordValue should fail on non 2xx")
 	}
+
+}
+
+func TestUpdateRecordValue(t *testing.T) {
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+
+	ip, _ := UpdateRecordValue(net.ParseIP("11.0.0.1"),"http://localhost:7000/v1", "poiuytre.nl", "@", "API_KEY")
+
+	if ! net.ParseIP("11.0.0.1").Equal(ip) {
+		t.Fatal("record does not have the expected value")
+	}
+}
+
+func TestFailToParseUpdateRecordValueResponse(t *testing.T) {
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+
+	_, err := UpdateRecordValue(net.ParseIP("11.0.0.1"),"http://localhost:7000/v1/WRONG/RESPONSE", "poiuytre.nl", "@", "API_KEY")
+	
+	if err == nil {
+		t.Fatal("UpdateRecordValue should not have returned a valid json")
+	}
 	
 }
+
+func TestFailToParseUpdateRecordValueValue(t *testing.T) {
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+
+	_, err := UpdateRecordValue(net.ParseIP("11.0.0.1"), "http://localhost:7000/v1/INVALID/IP", "poiuytre.nl", "@", "API_KEY")
+	
+	if err == nil {
+		t.Fatal("UpdateRecordValue should not have parsed an invalid ip")
+	}
+	
+}
+
+func TestFailUpdateRecordValueOnNon2xx(t *testing.T) {
+	server := http2xx.StartStubServer(handlers)
+	defer http2xx.StopStubServer(server)
+
+	_, err := UpdateRecordValue(net.ParseIP("11.0.0.1"), "http://localhost:7000/NOT_2XX", "poiuytre.nl", "@", "API_KEY")
+	
+	if err == nil {
+		t.Fatal("UpdateRecordValue should fail on non 2xx")
+	}
+
+}
+
+// curl -s -X PUT "https://api.godaddy.com/v1/domains/${mydomain}/records/A/${myhostname}"
+// -H "Authorization: sso-key     ${gdapikey}"
+// -H "Content-Type: application/json" -d "[{\"data\": \"${myip}\"}]"

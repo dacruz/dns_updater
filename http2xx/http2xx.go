@@ -1,6 +1,7 @@
 package http2xx
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -8,9 +9,17 @@ import (
 )
 
 func Get(url string, headers map[string]string) ([]byte, error) {
-
-	client := &http.Client{}
 	request, _ := http.NewRequest("GET", url, nil)
+	return exec(request, headers)
+}
+
+func Put(url string, headers map[string]string, body []byte) ([]byte, error) {
+	request, _ := http.NewRequest("PUT", url, bytes.NewBuffer(body))
+	return exec(request, headers)
+}
+
+func exec(request *http.Request, headers map[string]string) ([]byte, error) {
+	client := &http.Client{}
 
 	for name, value := range headers {
 		request.Header.Set(name, value)
@@ -21,7 +30,7 @@ func Get(url string, headers map[string]string) ([]byte, error) {
         return nil, err
     }
 	defer response.Body.Close()
-	
+
 	// if he dies, he dies... 
     bodyBytes, _ := ioutil.ReadAll(response.Body)
 	
@@ -31,5 +40,4 @@ func Get(url string, headers map[string]string) ([]byte, error) {
 	}
 
 	return 	bodyBytes, nil
-
 }
