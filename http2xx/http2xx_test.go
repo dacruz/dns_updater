@@ -21,12 +21,11 @@ func TestFailToExecuteGet(t *testing.T) {
 	defer StopStubServer(server)
 
 	_, err := Get("WRONG://localhost:7000/current/ip", nil)
-	
-	
+
 	if err == nil {
 		t.Fatal("Get should have failed to execute GET")
 	}
-	
+
 }
 
 func TestFailToGet2xx(t *testing.T) {
@@ -34,11 +33,11 @@ func TestFailToGet2xx(t *testing.T) {
 	defer StopStubServer(server)
 
 	_, err := Get("http://localhost:7000/WRONG/PATH", nil)
-	
+
 	if err == nil {
 		t.Fatal("Get should not succeed on non 2xx")
 	}
-	
+
 }
 
 func TestGetWithHeaders(t *testing.T) {
@@ -48,26 +47,26 @@ func TestGetWithHeaders(t *testing.T) {
 	headers := map[string]string {
 		"Ping": "Pong",
 	}
-	
+
 	resp, _ := Get("http://localhost:7000/echo/header", headers)
 
 	if string(resp) != "Pong" {
 		t.Fatal("Get should include the headers")
 	}
-	
+
 }
 
 func TestGetWithoutHeaders(t *testing.T) {
-	
+
 	server := StartStubServer(handlers)
 	defer StopStubServer(server)
 
 	resp, _ := Get("http://localhost:7000/echo/header", nil)
-	
+
 	if string(resp) != "" {
 		t.Fatal("Get should not include the headers if it is empty")
 	}
-	
+
 }
 
 func TestFailToExecutePut(t *testing.T) {
@@ -75,12 +74,11 @@ func TestFailToExecutePut(t *testing.T) {
 	defer StopStubServer(server)
 
 	_, err := Put("WRONG://localhost:7000/current/ip", nil, nil)
-	
-	
+
 	if err == nil {
 		t.Fatal("Put should have failed to execute Put")
 	}
-	
+
 }
 
 func TestFailToPut2xx(t *testing.T) {
@@ -88,11 +86,11 @@ func TestFailToPut2xx(t *testing.T) {
 	defer StopStubServer(server)
 
 	_, err := Put("http://localhost:7000/WRONG/PATH", nil, nil)
-	
+
 	if err == nil {
 		t.Fatal("Put should not succeed on non 2xx")
 	}
-	
+
 }
 
 func TestPutWithHeaders(t *testing.T) {
@@ -102,26 +100,26 @@ func TestPutWithHeaders(t *testing.T) {
 	headers := map[string]string {
 		"Ping": "Pong",
 	}
-	
+
 	resp, _ := Put("http://localhost:7000/echo/header", headers, nil)
 
 	if string(resp) != "Pong" {
 		t.Fatal("Put should include the headers")
 	}
-	
+
 }
 
 func TestPutWithoutHeaders(t *testing.T) {
-	
+
 	server := StartStubServer(handlers)
 	defer StopStubServer(server)
 
 	resp, _ := Put("http://localhost:7000/echo/header", nil, nil)
-	
+
 	if string(resp) != "" {
 		t.Fatal("Put should not include the headers if it is empty")
 	}
-	
+
 }
 
 func TestPutWithBody(t *testing.T) {
@@ -133,21 +131,18 @@ func TestPutWithBody(t *testing.T) {
 	if string(resp) != "body" {
 		t.Fatal("Put should include the body")
 	}
-	
+
 }
 
 func TestPutWithoutBody(t *testing.T) {
-	
+
 	server := StartStubServer(handlers)
 	defer StopStubServer(server)
 
 	resp, _ := Put("http://localhost:7000/echo/body", nil, nil)
-	
+
 	if string(resp) != "" {
 		t.Fatal("Put should not include the headers if it is empty")
 	}
-	
+
 }
-
-
-

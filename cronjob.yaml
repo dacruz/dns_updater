@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dns-updater
+spec:
+  schedule: "*/10 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: dns-updater
+            image: registry.poiuytre.nl/dns-updater:0.3
+            imagePullPolicy: IfNotPresent
+            env:
+              - name:  DNS_UPDATER_GO_DADDY_API_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: dns-updater-secret
+                    key: godaddy-apikey
+              - name:  DNS_UPDATER_GO_DADDY_API_URL 
+                value: "https://api.godaddy.com/v1"
+              - name:	 DNS_UPDATER_HOST 
+                value: "@"
+              - name:	 DNS_UPDATER_DOMAIN           
+                value: "poiuytre.nl"
+              - name:  DNS_UPDATER_IPFY_URL
+                value: "https://api.ipify.org"
+          restartPolicy: OnFailure
