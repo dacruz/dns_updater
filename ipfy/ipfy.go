@@ -2,12 +2,12 @@ package ipfy
 
 import (
 	"errors"
-	"net"
 	"github.com/dacruz/dns_updater/http2xx"
+	"net"
 )
 
-func FetchCurrentIp(ipfyUrl string) (net.IP, error){
-    bodyBytes, err := http2xx.Get(ipfyUrl, nil)
+func FetchCurrentIp(ipfyUrl string) (net.IP, error) {
+	bodyBytes, err := http2xx.Get(ipfyUrl, nil)
 	if err != nil {
 		return nil, err
 	}

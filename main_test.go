@@ -10,24 +10,23 @@ import (
 	"github.com/dacruz/dns_updater/http2xx"
 )
 
-func TestRunFailsOnConfigNotCorrect(t * testing.T) {
+func TestRunFailsOnConfigNotCorrect(t *testing.T) {
 	os.Unsetenv(DNS_UPDATER_GO_DADDY_API_URL)
 	os.Unsetenv(DNS_UPDATER_GO_DADDY_API_KEY)
 	os.Unsetenv(DNS_UPDATER_HOST)
 	os.Unsetenv(DNS_UPDATER_DOMAIN)
 	os.Unsetenv(DNS_UPDATER_IPFY_URL)
-	
+
 	err := run()
 	if err == nil {
-		t.Fatal("it shoudl have failed on missing config")	
+		t.Fatal("it shoudl have failed on missing config")
 	}
-} 
+}
 
-
-func TestRunFailsOnIpfyFailure(t * testing.T) {
+func TestRunFailsOnIpfyFailure(t *testing.T) {
 	setEnvVars()
 
-	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+	var handlers = map[string]func(http.ResponseWriter, *http.Request){
 		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusBadRequest)
 		},
@@ -38,14 +37,14 @@ func TestRunFailsOnIpfyFailure(t * testing.T) {
 
 	err := run()
 	if err == nil {
-		t.Fatal("it shoudl have failed on ipfy failure")	
+		t.Fatal("it shoudl have failed on ipfy failure")
 	}
-} 
+}
 
-func TestRunFailsOnGetGodaddyFailure(t * testing.T) {
+func TestRunFailsOnGetGodaddyFailure(t *testing.T) {
 	setEnvVars()
 
-	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+	var handlers = map[string]func(http.ResponseWriter, *http.Request){
 		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
 			rw.Write([]byte("11.0.0.1"))
 		},
@@ -56,19 +55,19 @@ func TestRunFailsOnGetGodaddyFailure(t * testing.T) {
 
 	err := run()
 	if err == nil {
-		t.Fatal("it shoudl have failed on get godaddy failure")	
+		t.Fatal("it shoudl have failed on get godaddy failure")
 	}
-} 
+}
 
-func TestRunFailsOnPutGodaddyFailure(t * testing.T) {
+func TestRunFailsOnPutGodaddyFailure(t *testing.T) {
 	setEnvVars()
 
-	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+	var handlers = map[string]func(http.ResponseWriter, *http.Request){
 		"/godaddy/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" {
 				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
 			}
-			
+
 			if r.Method == "PUT" {
 				rw.WriteHeader(http.StatusBadRequest)
 			}
@@ -83,20 +82,20 @@ func TestRunFailsOnPutGodaddyFailure(t * testing.T) {
 
 	err := run()
 	if err == nil {
-		t.Fatal("it shoudl have failed on put godaddy failure")	
+		t.Fatal("it shoudl have failed on put godaddy failure")
 	}
-} 
+}
 
-func TestUpdateRecord(t * testing.T) {
+func TestUpdateRecord(t *testing.T) {
 	setEnvVars()
 
-    var updated bool
-	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+	var updated bool
+	var handlers = map[string]func(http.ResponseWriter, *http.Request){
 		"/godaddy/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" {
 				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
 			}
-			
+
 			if r.Method == "PUT" {
 				bodyBytes, _ := ioutil.ReadAll(r.Body)
 				body := string(bodyBytes)
@@ -110,25 +109,25 @@ func TestUpdateRecord(t * testing.T) {
 
 	server := http2xx.StartStubServer(handlers)
 	defer http2xx.StopStubServer(server)
-	
+
 	main()
 
 	if !updated {
 		t.Fatal("record was not updated")
 	}
 
-} 
+}
 
-func TestDoNotUpdateRecordIfTheSame(t * testing.T) {
+func TestDoNotUpdateRecordIfTheSame(t *testing.T) {
 	setEnvVars()
 
-    var updated bool
-	var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+	var updated bool
+	var handlers = map[string]func(http.ResponseWriter, *http.Request){
 		"/godaddy/domains/poiuytre.nl/records/A/@": func(rw http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" {
 				rw.Write([]byte(`[{"data":"10.0.0.1","name":"@","ttl":600,"type":"A"}]`))
 			}
-			
+
 			if r.Method == "PUT" {
 				updated = true
 			}
@@ -140,25 +139,25 @@ func TestDoNotUpdateRecordIfTheSame(t * testing.T) {
 
 	server := http2xx.StartStubServer(handlers)
 	defer http2xx.StopStubServer(server)
-	
+
 	main()
 
 	if updated {
 		t.Fatal("record was updated when it should not")
 	}
 
-} 
+}
 
 func TestLoadConfReadsGoDaddyAPIUrl(t *testing.T) {
 	setEnvVars()
 	conf, _ := loadConf()
-	
+
 	expectedValue, _ := os.LookupEnv(DNS_UPDATER_GO_DADDY_API_URL)
-	if conf.GoDaddyAPIUrl != expectedValue  {
+	if conf.GoDaddyAPIUrl != expectedValue {
 		t.Fatal("conf.GoDaddyAPIUrl does not have the expected value")
 	}
 
-	if conf.GoDaddyAPIUrl == ""  {
+	if conf.GoDaddyAPIUrl == "" {
 		t.Fatal("conf.GoDaddyAPIUrl was not loaded")
 	}
 }
@@ -166,7 +165,7 @@ func TestLoadConfReadsGoDaddyAPIUrl(t *testing.T) {
 func TestLoadConfFailsForAbsentGoDaddyAPIUrl(t *testing.T) {
 	unsetEnvVars(DNS_UPDATER_GO_DADDY_API_URL)
 	_, err := loadConf()
-	
+
 	if err == nil {
 		t.Fatal("loadConf must fail if conf.GoDaddyAPIUrl is absent")
 	}
@@ -175,13 +174,13 @@ func TestLoadConfFailsForAbsentGoDaddyAPIUrl(t *testing.T) {
 func TestLoadConfReadsGoDaddyAPIKey(t *testing.T) {
 	setEnvVars()
 	conf, _ := loadConf()
-	
+
 	expectedValue, _ := os.LookupEnv(DNS_UPDATER_GO_DADDY_API_KEY)
-	if conf.GoDaddyAPIKey != expectedValue  {
+	if conf.GoDaddyAPIKey != expectedValue {
 		t.Fatal("conf.GoDaddyAPIKey does not have the expected value")
 	}
 
-	if conf.GoDaddyAPIKey == ""  {
+	if conf.GoDaddyAPIKey == "" {
 		t.Fatal("conf.GoDaddyAPIKey was not loaded")
 	}
 }
@@ -189,7 +188,7 @@ func TestLoadConfReadsGoDaddyAPIKey(t *testing.T) {
 func TestLoadConfFailsForAbsentGoDaddyAPIKey(t *testing.T) {
 	unsetEnvVars(DNS_UPDATER_GO_DADDY_API_KEY)
 	_, err := loadConf()
-	
+
 	if err == nil {
 		t.Fatal("loadConf must fail if conf.GoDaddyAPIKey is absent")
 	}
@@ -198,13 +197,13 @@ func TestLoadConfFailsForAbsentGoDaddyAPIKey(t *testing.T) {
 func TestLoadConfReadsHost(t *testing.T) {
 	setEnvVars()
 	conf, _ := loadConf()
-	
+
 	expectedValue, _ := os.LookupEnv(DNS_UPDATER_HOST)
-	if conf.Host != expectedValue  {
+	if conf.Host != expectedValue {
 		t.Fatal("conf.Host does not have the expected value")
 	}
 
-	if conf.GoDaddyAPIKey == ""  {
+	if conf.GoDaddyAPIKey == "" {
 		t.Fatal("conf.Host was not loaded")
 	}
 }
@@ -212,23 +211,22 @@ func TestLoadConfReadsHost(t *testing.T) {
 func TestLoadConfFailsForAbsentHost(t *testing.T) {
 	unsetEnvVars(DNS_UPDATER_HOST)
 	_, err := loadConf()
-	
+
 	if err == nil {
 		t.Fatal("loadConf must fail if conf.Host is absent")
 	}
 }
 
-
 func TestLoadConfReadsDomain(t *testing.T) {
 	setEnvVars()
 	conf, _ := loadConf()
-	
+
 	expectedValue, _ := os.LookupEnv(DNS_UPDATER_DOMAIN)
-	if conf.Domain != expectedValue  {
+	if conf.Domain != expectedValue {
 		t.Fatal("conf.Domain does not have the expected value")
 	}
 
-	if conf.Domain == ""  {
+	if conf.Domain == "" {
 		t.Fatal("conf.Domain was not loaded")
 	}
 }
@@ -236,7 +234,7 @@ func TestLoadConfReadsDomain(t *testing.T) {
 func TestLoadConfFailsForAbsentDomain(t *testing.T) {
 	unsetEnvVars(DNS_UPDATER_DOMAIN)
 	_, err := loadConf()
-	
+
 	if err == nil {
 		t.Fatal("loadConf must fail if conf.Domain is absent")
 	}
@@ -245,13 +243,13 @@ func TestLoadConfFailsForAbsentDomain(t *testing.T) {
 func TestLoadConfReadsIpfyUrl(t *testing.T) {
 	setEnvVars()
 	conf, _ := loadConf()
-	
+
 	expectedValue, _ := os.LookupEnv(DNS_UPDATER_IPFY_URL)
-	if conf.IpfyAPIUrl != expectedValue  {
+	if conf.IpfyAPIUrl != expectedValue {
 		t.Fatal("conf.IpfyAPIUrl does not have the expected value")
 	}
 
-	if conf.IpfyAPIUrl == ""  {
+	if conf.IpfyAPIUrl == "" {
 		t.Fatal("conf.IpfyAPIUrl was not loaded")
 	}
 }
@@ -259,7 +257,7 @@ func TestLoadConfReadsIpfyUrl(t *testing.T) {
 func TestLoadConfFailsForAbsentIpfyUrl(t *testing.T) {
 	unsetEnvVars(DNS_UPDATER_IPFY_URL)
 	_, err := loadConf()
-	
+
 	if err == nil {
 		t.Fatal("loadConf must fail if conf.IpfyAPIUrl is absent")
 	}
@@ -276,4 +274,3 @@ func setEnvVars() {
 func unsetEnvVars(varName string) {
 	os.Unsetenv(varName)
 }
-

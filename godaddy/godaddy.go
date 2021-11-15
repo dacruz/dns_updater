@@ -1,11 +1,11 @@
 package godaddy
 
 import (
-	"fmt"
 	"encoding/json"
 	"errors"
-	"net"
+	"fmt"
 	"github.com/dacruz/dns_updater/http2xx"
+	"net"
 )
 
 type record struct {
@@ -35,7 +35,7 @@ func FetchCurrentRecordValue(godaddyUrl string, domain string, host string, apiK
 		return nil, errors.New("invalid IP")
 	}
 
-	return 	ip, nil
+	return ip, nil
 
 }
 
@@ -44,7 +44,7 @@ func UpdateRecordValue(ip net.IP, godaddyUrl string, domain string, host string,
 
 	headers := map[string]string {
 		"Authorization": fmt.Sprintf("sso-key %s", apiKey),
-		"Content-Type": "application/json",
+		"Content-Type":  "application/json",
 	}
 
 	aRecord := record{Data: ip.String()}

@@ -24,20 +24,20 @@ func exec(request *http.Request, headers map[string]string) ([]byte, error) {
 	for name, value := range headers {
 		request.Header.Set(name, value)
 	}
-		
+
 	response, err := client.Do(request)
 	if err != nil {
-        return nil, err
-    }
+		return nil, err
+	}
 	defer response.Body.Close()
 
-	// if he dies, he dies... 
-    bodyBytes, _ := ioutil.ReadAll(response.Body)
-	
+	// if he dies, he dies...
+	bodyBytes, _ := ioutil.ReadAll(response.Body)
+
 	if response.StatusCode < 200 || response.StatusCode > 299 {
 		errorMessage := fmt.Sprintf("request failed: %d, %q", response.StatusCode, string(bodyBytes))
 		return nil, errors.New(errorMessage)
 	}
 
-	return 	bodyBytes, nil
+	return bodyBytes, nil
 }
