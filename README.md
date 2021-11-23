@@ -1,4 +1,4 @@
-# dns_updater
+# DNS Updater
 Small tool to handle my home IP changes by updating poiuytre.nl A record on GoDaddy
 
 ## Testing
@@ -11,7 +11,7 @@ $ go test ./...
 $ go test -coverprofile=cover.out  ./... && go tool cover -html=cover.out
 ```
 
-## Who to run
+## How to run it
 
 ### Requisite
 To run the application, you first need to decrypt secrets.yaml file. Or write your own and replace the one you've found here...
@@ -20,12 +20,12 @@ I'm using the following for encyption:
 * age - https://github.com/FiloSottile/age
 * SOPS - https://github.com/mozilla/sops
 
-Decrypt:
+#### Decrypt:
 ```
 $ sops -d --output-type yaml secrets.enc.yaml 
 ```
 
-Encrypt:
+#### Encrypt:
 ```
 $ sops -e --input-type yaml --age ageEXAMPLE secrets.yaml > secrets.enc.yaml 
 ```
@@ -36,6 +36,5 @@ $ kubectl apply -f secrets.yaml
 ```
 
 ```
-
 $ kubectl apply -f cronjob.yaml
 ```
