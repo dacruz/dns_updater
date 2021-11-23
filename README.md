@@ -11,7 +11,7 @@ $ go test ./...
 $ go test -coverprofile=cover.out  ./... && go tool cover -html=cover.out
 ```
 
-## Who to run it
+## How to run it
 
 ### Requisite
 To run the application, you first need to decrypt secrets.yaml file. Or write your own and replace the one you've found here...
