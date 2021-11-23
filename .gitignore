@@ -13,3 +13,7 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+
+# Do not push my secrets files
+secrets.yaml
