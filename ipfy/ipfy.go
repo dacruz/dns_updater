@@ -1,21 +1,22 @@
 package ipfy
 
 import (
-	"errors"
 	"github.com/dacruz/dns_updater/http2xx"
 	"net"
 )
 
-func FetchCurrentIp(ipfyUrl string) (net.IP, error) {
+func FetchCurrentIp(chnl chan net.IP, ipfyUrl string) {
+	defer close(chnl)
+
 	bodyBytes, err := http2xx.Get(ipfyUrl, nil)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	ip := net.ParseIP(string(bodyBytes))
 	if ip == nil {
-		return nil, errors.New("invalid IP")
+		return
 	}
 
-	return ip, nil
+	chnl <- ip
 }

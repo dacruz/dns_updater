@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+var handlers = map[string]func(http.ResponseWriter, *http.Request){
 	"/echo/header": func(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte(r.Header.Get("Ping")))
 	},
@@ -44,7 +44,7 @@ func TestGetWithHeaders(t *testing.T) {
 	server := StartStubServer(handlers)
 	defer StopStubServer(server)
 
-	headers := map[string]string {
+	headers := map[string]string{
 		"Ping": "Pong",
 	}
 
@@ -97,7 +97,7 @@ func TestPutWithHeaders(t *testing.T) {
 	server := StartStubServer(handlers)
 	defer StopStubServer(server)
 
-	headers := map[string]string {
+	headers := map[string]string{
 		"Ping": "Pong",
 	}
 
