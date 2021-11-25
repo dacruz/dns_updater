@@ -22,7 +22,7 @@ I'm using the following for encyption:
 
 #### Decrypt:
 ```
-$ sops -d --output-type yaml secrets.enc.yaml 
+$ sops -d --output-type yaml secrets.enc.yaml > secrets.yaml
 ```
 
 #### Encrypt:

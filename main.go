@@ -2,10 +2,12 @@ package main
 
 import (
 	"errors"
+	"log"
+	"net"
+	"os"
+
 	"github.com/dacruz/dns_updater/godaddy"
 	"github.com/dacruz/dns_updater/ipfy"
-	"log"
-	"os"
 )
 
 const (
@@ -38,17 +40,24 @@ func run() error {
 		return err
 	}
 
-	currentIp, err := ipfy.FetchCurrentIp(conf.IpfyAPIUrl)
-	if err != nil {
-		return err
-	}
-	log.Printf("currentIp: %s", currentIp.String())
+	currentIpChannel := make(chan net.IP)
+	go ipfy.FetchCurrentIp(currentIpChannel, conf.IpfyAPIUrl)
 
-	currentDnsValue, err := godaddy.FetchCurrentRecordValue(conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
-	if err != nil {
-		return err
+	currentDnsValueChannel := make(chan net.IP)
+	go godaddy.FetchCurrentRecordValue(currentDnsValueChannel, conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
+
+	currentIp, ok := <-currentIpChannel
+	if !ok {
+		return errors.New("could not fetch currect ip")
 	}
-	log.Printf("currentDnsValue: %s", currentDnsValue.String())
+
+	currentDnsValue, ok := <-currentDnsValueChannel
+	if !ok {
+		return errors.New("could not fetch currect dns value")
+	}
+
+	log.Printf("dns value: %s", currentDnsValue.String())
+	log.Printf("current ip: %s", currentIp.String())
 
 	if !currentDnsValue.Equal(currentIp) {
 		updatedDnsValue, err := godaddy.UpdateRecordValue(currentIp, conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)

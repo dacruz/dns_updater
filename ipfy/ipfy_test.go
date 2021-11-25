@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var handlers = map[string]func(http.ResponseWriter, *http.Request) {
+var handlers = map[string]func(http.ResponseWriter, *http.Request){
 	"/current/ip": func(rw http.ResponseWriter, r *http.Request) {
 		rw.Write([]byte("10.0.0.1"))
 	},
@@ -20,8 +20,10 @@ func TestFetchCurrentIp(t *testing.T) {
 	server := http2xx.StartStubServer(handlers)
 	defer http2xx.StopStubServer(server)
 
-	currectIp, _ := FetchCurrentIp("http://localhost:7000/current/ip")
+	currentIpChannel := make(chan net.IP)
+	go FetchCurrentIp(currentIpChannel, "http://localhost:7000/current/ip")
 
+	currectIp := <-currentIpChannel
 	if !net.ParseIP("10.0.0.1").Equal(currectIp) {
 		t.Fatal("currectIp does not have the expected value")
 	}
@@ -32,9 +34,11 @@ func TestFailToParseFetchCurrentIpResponse(t *testing.T) {
 	server := http2xx.StartStubServer(handlers)
 	defer http2xx.StopStubServer(server)
 
-	_, err := FetchCurrentIp("http://localhost:7000/WRONG/IP")
+	currentIpChannel := make(chan net.IP)
+	go FetchCurrentIp(currentIpChannel, "http://localhost:7000/WRONG/IP")
 
-	if err == nil {
+	_, ok := <-currentIpChannel
+	if ok {
 		t.Fatal("FetchCurrentIp should not have returned a valid ip")
 	}
 
@@ -43,10 +47,11 @@ func TestFailToParseFetchCurrentIpResponse(t *testing.T) {
 func TestFailFetchCurrentIpOnNon2xx(t *testing.T) {
 	server := http2xx.StartStubServer(handlers)
 	defer http2xx.StopStubServer(server)
+	currentIpChannel := make(chan net.IP)
+	go FetchCurrentIp(currentIpChannel, "http://localhost:7000/NOT_2XX")
 
-	_, err := FetchCurrentIp("http://localhost:7000/NOT_2XX")
-
-	if err == nil {
+	_, ok := <-currentIpChannel
+	if ok {
 		t.Fatal("FetchCurrentIp should fail on non 2xx")
 	}
 

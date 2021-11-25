@@ -10,7 +10,7 @@ spec:
         spec:
           containers:
           - name: dns-updater
-            image: registry.poiuytre.nl/dns-updater:0.3
+            image: registry.poiuytre.nl/dns-updater:0.4
             imagePullPolicy: IfNotPresent
             env:
               - name:  DNS_UPDATER_GO_DADDY_API_KEY
