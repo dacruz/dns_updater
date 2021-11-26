@@ -15,7 +15,7 @@ func TestRunFailsOnConfigNotCorrect(t *testing.T) {
 	os.Unsetenv(DNS_UPDATER_GO_DADDY_API_KEY)
 	os.Unsetenv(DNS_UPDATER_HOST)
 	os.Unsetenv(DNS_UPDATER_DOMAIN)
-	os.Unsetenv(DNS_UPDATER_IPFY_URL)
+	os.Unsetenv(DNS_UPDATER_IPIFY_URL)
 
 	err := run()
 	if err == nil {
@@ -23,11 +23,11 @@ func TestRunFailsOnConfigNotCorrect(t *testing.T) {
 	}
 }
 
-func TestRunFailsOnIpfyFailure(t *testing.T) {
+func TestRunFailsOnIpifyFailure(t *testing.T) {
 	setEnvVars()
 
 	var handlers = map[string]func(http.ResponseWriter, *http.Request){
-		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+		"/ipify": func(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusBadRequest)
 		},
 	}
@@ -37,7 +37,7 @@ func TestRunFailsOnIpfyFailure(t *testing.T) {
 
 	err := run()
 	if err == nil {
-		t.Fatal("it shoudl have failed on ipfy failure")
+		t.Fatal("it shoudl have failed on ipify failure")
 	}
 }
 
@@ -45,7 +45,7 @@ func TestRunFailsOnGetGodaddyFailure(t *testing.T) {
 	setEnvVars()
 
 	var handlers = map[string]func(http.ResponseWriter, *http.Request){
-		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+		"/ipify": func(rw http.ResponseWriter, r *http.Request) {
 			rw.Write([]byte("11.0.0.1"))
 		},
 	}
@@ -72,7 +72,7 @@ func TestRunFailsOnPutGodaddyFailure(t *testing.T) {
 				rw.WriteHeader(http.StatusBadRequest)
 			}
 		},
-		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+		"/ipify": func(rw http.ResponseWriter, r *http.Request) {
 			rw.Write([]byte("11.0.0.1"))
 		},
 	}
@@ -102,7 +102,7 @@ func TestUpdateRecord(t *testing.T) {
 				updated = strings.Contains(body, "11.0.0.1")
 			}
 		},
-		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+		"/ipify": func(rw http.ResponseWriter, r *http.Request) {
 			rw.Write([]byte("11.0.0.1"))
 		},
 	}
@@ -132,7 +132,7 @@ func TestDoNotUpdateRecordIfTheSame(t *testing.T) {
 				updated = true
 			}
 		},
-		"/ipfy": func(rw http.ResponseWriter, r *http.Request) {
+		"/ipify": func(rw http.ResponseWriter, r *http.Request) {
 			rw.Write([]byte("10.0.0.1"))
 		},
 	}
@@ -240,26 +240,26 @@ func TestLoadConfFailsForAbsentDomain(t *testing.T) {
 	}
 }
 
-func TestLoadConfReadsIpfyUrl(t *testing.T) {
+func TestLoadConfReadsIpifyUrl(t *testing.T) {
 	setEnvVars()
 	conf, _ := loadConf()
 
-	expectedValue, _ := os.LookupEnv(DNS_UPDATER_IPFY_URL)
-	if conf.IpfyAPIUrl != expectedValue {
-		t.Fatal("conf.IpfyAPIUrl does not have the expected value")
+	expectedValue, _ := os.LookupEnv(DNS_UPDATER_IPIFY_URL)
+	if conf.IpifyAPIUrl != expectedValue {
+		t.Fatal("conf.IpifyAPIUrl does not have the expected value")
 	}
 
-	if conf.IpfyAPIUrl == "" {
-		t.Fatal("conf.IpfyAPIUrl was not loaded")
+	if conf.IpifyAPIUrl == "" {
+		t.Fatal("conf.IpifyAPIUrl was not loaded")
 	}
 }
 
-func TestLoadConfFailsForAbsentIpfyUrl(t *testing.T) {
-	unsetEnvVars(DNS_UPDATER_IPFY_URL)
+func TestLoadConfFailsForAbsentIpifyUrl(t *testing.T) {
+	unsetEnvVars(DNS_UPDATER_IPIFY_URL)
 	_, err := loadConf()
 
 	if err == nil {
-		t.Fatal("loadConf must fail if conf.IpfyAPIUrl is absent")
+		t.Fatal("loadConf must fail if conf.IpifyAPIUrl is absent")
 	}
 }
 
@@ -268,7 +268,7 @@ func setEnvVars() {
 	os.Setenv(DNS_UPDATER_GO_DADDY_API_KEY, "SOME_API_KEY")
 	os.Setenv(DNS_UPDATER_HOST, "@")
 	os.Setenv(DNS_UPDATER_DOMAIN, "poiuytre.nl")
-	os.Setenv(DNS_UPDATER_IPFY_URL, "http://localhost:7000/ipfy")
+	os.Setenv(DNS_UPDATER_IPIFY_URL, "http://localhost:7000/ipify")
 }
 
 func unsetEnvVars(varName string) {

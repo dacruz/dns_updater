@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/dacruz/dns_updater/godaddy"
-	"github.com/dacruz/dns_updater/ipfy"
+	"github.com/dacruz/dns_updater/ipify"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 	DNS_UPDATER_GO_DADDY_API_KEY = "DNS_UPDATER_GO_DADDY_API_KEY"
 	DNS_UPDATER_HOST             = "DNS_UPDATER_HOST"
 	DNS_UPDATER_DOMAIN           = "DNS_UPDATER_DOMAIN"
-	DNS_UPDATER_IPFY_URL         = "DNS_UPDATER_IPFY_URL"
+	DNS_UPDATER_IPIFY_URL         = "DNS_UPDATER_IPIFY_URL"
 )
 
 type configuration struct {
@@ -23,7 +23,7 @@ type configuration struct {
 	GoDaddyAPIKey string
 	Host          string
 	Domain        string
-	IpfyAPIUrl    string
+	IpifyAPIUrl    string
 }
 
 func main() {
@@ -41,7 +41,7 @@ func run() error {
 	}
 
 	currentIpChannel := make(chan net.IP)
-	go ipfy.FetchCurrentIp(currentIpChannel, conf.IpfyAPIUrl)
+	go ipify.FetchCurrentIp(currentIpChannel, conf.IpifyAPIUrl)
 
 	currentDnsValueChannel := make(chan net.IP)
 	go godaddy.FetchCurrentRecordValue(currentDnsValueChannel, conf.GoDaddyAPIUrl, conf.Domain, conf.Host, conf.GoDaddyAPIKey)
@@ -88,16 +88,16 @@ func loadConf() (configuration, error) {
 	domain, domainExists := os.LookupEnv(DNS_UPDATER_DOMAIN)
 	config.Domain = domain
 
-	ipfyAPIUrl, ipfyAPIUrlExists := os.LookupEnv(DNS_UPDATER_IPFY_URL)
-	config.IpfyAPIUrl = ipfyAPIUrl
+	ipifyAPIUrl, ipifyAPIUrlExists := os.LookupEnv(DNS_UPDATER_IPIFY_URL)
+	config.IpifyAPIUrl = ipifyAPIUrl
 
-	if !goDaddyAPIUrlExists || !goDaddyAPIKeyExists || !hostExists || !domainExists || !ipfyAPIUrlExists {
+	if !goDaddyAPIUrlExists || !goDaddyAPIKeyExists || !hostExists || !domainExists || !ipifyAPIUrlExists {
 		return config, errors.New("environment variable missing. e.g: " +
 			"export DNS_UPDATER_GO_DADDY_API_URL=FOO " +
 			"export DNS_UPDATER_GO_DADDY_API_KEY=BAR " +
 			"export DNS_UPDATER_HOST=BAZ " +
 			"export DNS_UPDATER_DOMAIN=OPA " +
-			"export DNS_UPDATER_IPFY_URL=OMA")
+			"export DNS_UPDATER_IPIFY_URL=OMA")
 	}
 
 	return config, nil

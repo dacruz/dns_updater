@@ -32,7 +32,7 @@ $ sops -e --input-type yaml --age ageEXAMPLE secrets.yaml > secrets.enc.yaml
 
 ## Deploying to your k8s cluster
 ```
-$ kubectl apply -f secrets.yaml 
+$ kubectl apply -f secrets.yaml && kubectl apply -f config.yaml 
 ```
 
 ```

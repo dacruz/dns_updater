@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dns-updater-config
+  namespace: default
+data:
+  DNS_UPDATER_IPIFY_URL: "https://api.ipify.org"
+  DNS_UPDATER_GO_DADDY_API_URL: "https://api.godaddy.com/v1"
+  DNS_UPDATER_HOST: "@"
+  DNS_UPDATER_DOMAIN: "poiuytre.nl"
+  
+
+
+  
