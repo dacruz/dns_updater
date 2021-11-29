@@ -1,4 +1,4 @@
-package ipfy
+package ipify
 
 import (
 	"github.com/dacruz/dns_updater/http2xx"
